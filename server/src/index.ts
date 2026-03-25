@@ -1,7 +1,4 @@
-import { WebSocketServer } from 'ws';
+import { startServer } from './server.js';
 
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
-
-// WebSocket server
-const wss = new WebSocketServer({ port: PORT });
+startServer();

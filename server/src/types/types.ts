@@ -2,7 +2,7 @@ import type { WebSocket } from 'ws';
 
 export interface Player {
   name: string;
-  index: string;
+  index: string | number;
   score: number;
   ws?: WebSocket;
   hasAnswered?: boolean;
@@ -20,7 +20,7 @@ export interface Question {
 export interface Game {
   id: string;
   code: string;
-  hostId: string;
+  hostId: string | number;
   questions: Question[];
   players: Player[];
   currentQuestion: number;
@@ -33,7 +33,7 @@ export interface Game {
 export interface User {
   name: string;
   password: string;
-  index: string;
+  index: string | number;
   ws?: WebSocket;
 }
 
@@ -65,3 +65,6 @@ export interface AnswerData {
   questionIndex: number;
   answerIndex: number;
 }
+
+export type AuthedWebSocket = WebSocket & { user?: User };
+
