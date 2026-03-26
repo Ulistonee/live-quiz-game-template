@@ -36,10 +36,10 @@ export const handleRegistration = (ws: AuthedWebSocket, msg: any) => {
         score: 0,
     });
 
+    console.log("players", players);
+
     ws.user = { name: name, index: index, password: password };
     ws.user.ws = ws;
-
-    console.log("ws.user", ws.user);
 
     ws.send(JSON.stringify(
     { 

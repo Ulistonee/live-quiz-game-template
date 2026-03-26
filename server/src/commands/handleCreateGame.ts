@@ -45,6 +45,7 @@ export const handleCreateGame = (ws: AuthedWebSocket, msg: unknown) => {
         id: uuid(),
         code: uuid().slice(0, 6),
         hostId: ws.user.index,
+        hostWs: ws,
         questions: questions,
         players: [],
         currentQuestion: 0,

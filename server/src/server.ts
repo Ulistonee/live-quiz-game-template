@@ -4,6 +4,7 @@ import { handleRegistration } from './commands/handleRegistration.js';
 import { handleCreateGame } from './commands/handleCreateGame.js';
 import type { AuthedWebSocket } from './types/types.js';
 import { handleJoinGame } from './commands/handleJoinGame.js';
+import { handleStartGame } from './commands/handleStartGame.js';
 
 const serverHandler = (ws: AuthedWebSocket) => {
   console.log('Client connected');
@@ -18,11 +19,6 @@ const serverHandler = (ws: AuthedWebSocket) => {
       return;
     }
 
-    if (msg.id !== 0) {
-      ws.send(JSON.stringify({ id: 0, error: 'Invalid ID' }));
-      return;
-    }
-
     switch (msg.type) {
       case 'reg':
         handleRegistration(ws, msg.data);
@@ -32,6 +28,9 @@ const serverHandler = (ws: AuthedWebSocket) => {
         break;
       case 'join_game':
         handleJoinGame(ws, msg.data);
+        break;
+      case 'start_game':
+        handleStartGame(ws, msg.data);
         break;
       default:
         ws.send(JSON.stringify({ id: 0, error: 'Unknown command' }));

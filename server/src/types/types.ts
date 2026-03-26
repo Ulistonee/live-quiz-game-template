@@ -21,6 +21,7 @@ export interface Game {
   id: string;
   code: string;
   hostId: string | number;
+  hostWs?: WebSocket;
   questions: Question[];
   players: Player[];
   currentQuestion: number;

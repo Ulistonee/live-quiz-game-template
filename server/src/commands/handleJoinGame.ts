@@ -8,7 +8,6 @@ function isJoinGameData(x: unknown): x is JoinGameData {
 }
 
 export const handleJoinGame = (ws: AuthedWebSocket, msg: unknown) => {
-    console.log("handleJoinGame", msg);
     if (!ws.user) {
         ws.send(JSON.stringify({ id: 0, error: "Unauthorized: please reg first" }));
         return;
@@ -21,17 +20,12 @@ export const handleJoinGame = (ws: AuthedWebSocket, msg: unknown) => {
 
     const code = msg.code.trim().toLowerCase();
 
-    console.log(games)
-
     const game = [...games.values()].find((g) => g.code === code);
-    console.log("game", game);
     if (!game) {
-        console.log("game not found");
         ws.send(JSON.stringify({ id: 0, error: "Game not found" }));
         return;
     }
 
-    // Ensure we have a Player entry for this user and attach ws
     const existing = players.get(ws.user.name);
     const player: Player = existing ?? { name: ws.user.name, index: ws.user.index, score: 0 };
     player.ws = ws;
@@ -41,8 +35,37 @@ export const handleJoinGame = (ws: AuthedWebSocket, msg: unknown) => {
     if (!alreadyInGame) {
         game.players.push(player);
     }
-    
-    console.log('before ws send')
 
     ws.send(JSON.stringify({ type: "game_joined", data: { gameId: game.id }, id: 0 }));
+
+    const broadcastMsg = JSON.stringify({
+        type: "player_joined",
+        data: {
+            playerName: player.name,
+            playerCount: game.players.length,
+        },
+        id: 0,
+    });
+
+    const updatePlayersMsg = JSON.stringify({
+        type: "update_players",
+        data: game.players.map((p) => ({
+            name: p.name,
+            index: p.index,
+            score: p.score,
+        })),
+        id: 0,
+    });
+
+    for (const p of game.players) {
+        if (p.ws && p.ws.readyState === p.ws.OPEN) {
+            p.ws.send(broadcastMsg);
+            p.ws.send(updatePlayersMsg);
+        }
+    }
+
+    if (game.hostWs && game.hostWs.readyState === game.hostWs.OPEN) {
+        game.hostWs.send(broadcastMsg);
+        game.hostWs.send(updatePlayersMsg);
+    }
 }
