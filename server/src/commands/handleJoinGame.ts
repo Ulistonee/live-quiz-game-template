@@ -27,13 +27,10 @@ export const handleJoinGame = (ws: AuthedWebSocket, msg: unknown) => {
     }
 
     const existing = players.get(ws.user.name);
-    const player: Player = existing ?? { name: ws.user.name, index: ws.user.index, score: 0 };
-    player.ws = ws;
-    players.set(ws.user.name, player);
 
-    const alreadyInGame = game.players.some((p: Player) => p.index === player.index);
+    const alreadyInGame = game.players.some((p: Player) => p.index === existing.index);
     if (!alreadyInGame) {
-        game.players.push(player);
+        game.players.push(existing);
     }
 
     ws.send(JSON.stringify({ type: "game_joined", data: { gameId: game.id }, id: 0 }));
@@ -41,7 +38,7 @@ export const handleJoinGame = (ws: AuthedWebSocket, msg: unknown) => {
     const broadcastMsg = JSON.stringify({
         type: "player_joined",
         data: {
-            playerName: player.name,
+            playerName: existing.name,
             playerCount: game.players.length,
         },
         id: 0,

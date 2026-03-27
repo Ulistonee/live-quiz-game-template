@@ -26,6 +26,7 @@ export const handleRegistration = (ws: AuthedWebSocket, msg: any) => {
             name: name,
             index: index,
             password: password,
+            ws: ws,
         });
     }
     
@@ -34,9 +35,8 @@ export const handleRegistration = (ws: AuthedWebSocket, msg: any) => {
         name: name,
         index: index,
         score: 0,
+        ws: ws,
     });
-
-    console.log("players", players);
 
     ws.user = { name: name, index: index, password: password };
     ws.user.ws = ws;
