@@ -5,6 +5,8 @@ import { handleCreateGame } from './commands/handleCreateGame.js';
 import type { AuthedWebSocket } from './types/types.js';
 import { handleJoinGame } from './commands/handleJoinGame.js';
 import { handleStartGame } from './commands/handleStartGame.js';
+import { handleAnswer } from './commands/handleAnswer.js';
+import { handleClientDisconnect } from './game/handleDisconnect.js';
 
 const serverHandler = (ws: AuthedWebSocket) => {
   console.log('Client connected');
@@ -32,6 +34,9 @@ const serverHandler = (ws: AuthedWebSocket) => {
       case 'start_game':
         handleStartGame(ws, msg.data);
         break;
+      case 'answer':
+        handleAnswer(ws, msg.data);
+        break;
       default:
         ws.send(JSON.stringify({ id: 0, error: 'Unknown command' }));
     }
@@ -39,6 +44,7 @@ const serverHandler = (ws: AuthedWebSocket) => {
 
   ws.on('close', () => {
     console.log('Client disconnected');
+    handleClientDisconnect(ws);
   });
 }
 

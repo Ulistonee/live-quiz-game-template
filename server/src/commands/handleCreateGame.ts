@@ -1,4 +1,4 @@
-import { games, players, users } from "../store/store.js";
+import { games } from "../store/store.js";
 import { v4 as uuid } from "uuid";
 import type { AuthedWebSocket } from "../types/types.js";
 import type { CreateGameData, Game, Question } from "../types/types.js";
@@ -48,7 +48,7 @@ export const handleCreateGame = (ws: AuthedWebSocket, msg: unknown) => {
         hostWs: ws,
         questions: questions,
         players: [],
-        currentQuestion: 0,
+        currentQuestion: -1,
         status: 'waiting',
         questionStartTime: undefined,
         questionTimer: undefined,

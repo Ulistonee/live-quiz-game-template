@@ -1,6 +1,12 @@
 import type { AuthedWebSocket, StartGameData } from "../types/types.js";
 import { games } from "../store/store.js";
+import { beginQuestionRound } from "../game/questionFlow.js";
 
+function isStartGameData(x: unknown): x is StartGameData {
+    if (!x || typeof x !== "object") return false;
+    const d = x as Record<string, unknown>;
+    return typeof d.gameId === "string" && d.gameId.length > 0;
+}
 
 export const handleStartGame = (ws: AuthedWebSocket, msg: unknown) => {
     if (!ws.user) {
@@ -8,8 +14,21 @@ export const handleStartGame = (ws: AuthedWebSocket, msg: unknown) => {
         return;
     }
 
+    if (!isStartGameData(msg)) {
+        ws.send(JSON.stringify({ id: 0, error: "Invalid data" }));
+        return;
+    }
 
     const game = games.get(msg.gameId);
+    if (!game) {
+        ws.send(JSON.stringify({ id: 0, error: "Game not found" }));
+        return;
+    }
+
+    if (String(ws.user.index) !== String(game.hostId)) {
+        ws.send(JSON.stringify({ id: 0, error: "Only host can start the game" }));
+        return;
+    }
 
     if (game.status !== "waiting") {
         ws.send(JSON.stringify({ id: 0, error: "Game already started" }));
@@ -17,29 +36,6 @@ export const handleStartGame = (ws: AuthedWebSocket, msg: unknown) => {
     }
 
     game.status = "in_progress";
-    game.currentQuestion = 0;
-
-    const question = game.questions[0];
-
-    const questionMsg = JSON.stringify({
-        type: "question",
-        data: {
-            questionNumber: 1,
-            totalQuestions: game.questions.length,
-            text: question.text,
-            options: question.options,
-            timeLimitSec: question.timeLimitSec,
-        },
-        id: 0,
-    });
-
-    for (const p of game.players) {
-        if (p.ws && p.ws.readyState === p.ws.OPEN) {
-            p.ws.send(questionMsg);
-        }
-    }
-
-    if (game.hostWs && game.hostWs.readyState === game.hostWs.OPEN) {
-        game.hostWs.send(questionMsg);
-    }
-}
+    game._lastResolvedQuestion = undefined;
+    beginQuestionRound(game, 0);
+};

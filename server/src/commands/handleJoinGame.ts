@@ -1,5 +1,5 @@
 import type { AuthedWebSocket, JoinGameData, Player } from "../types/types.js";
-import { games, players } from "../store/store.js";
+import { games, players, users } from "../store/store.js";
 
 function isJoinGameData(x: unknown): x is JoinGameData {
     if (!x || typeof x !== "object") return false;
@@ -26,11 +26,21 @@ export const handleJoinGame = (ws: AuthedWebSocket, msg: unknown) => {
         return;
     }
 
-    const existing = players.get(ws.user.name);
+    let player = players.get(ws.user.name);
+    if (!player) {
+        const u = users.get(ws.user.name);
+        if (!u) {
+            ws.send(JSON.stringify({ id: 0, error: "Register first" }));
+            return;
+        }
+        player = { name: u.name, index: u.index, score: 0, ws };
+        players.set(ws.user.name, player);
+    }
+    player.ws = ws;
 
-    const alreadyInGame = game.players.some((p: Player) => p.index === existing.index);
+    const alreadyInGame = game.players.some((p: Player) => p.index === player.index);
     if (!alreadyInGame) {
-        game.players.push(existing);
+        game.players.push(player);
     }
 
     ws.send(JSON.stringify({ type: "game_joined", data: { gameId: game.id }, id: 0 }));
@@ -38,7 +48,7 @@ export const handleJoinGame = (ws: AuthedWebSocket, msg: unknown) => {
     const broadcastMsg = JSON.stringify({
         type: "player_joined",
         data: {
-            playerName: existing.name,
+            playerName: player.name,
             playerCount: game.players.length,
         },
         id: 0,
@@ -62,7 +72,6 @@ export const handleJoinGame = (ws: AuthedWebSocket, msg: unknown) => {
     }
 
     if (game.hostWs && game.hostWs.readyState === game.hostWs.OPEN) {
-        game.hostWs.send(broadcastMsg);
         game.hostWs.send(updatePlayersMsg);
     }
 }

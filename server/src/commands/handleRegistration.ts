@@ -12,13 +12,13 @@ export const handleRegistration = (ws: AuthedWebSocket, msg: any) => {
     }
 
     if (users.has(name)) {
-        const user = users.get(name);
+        const user = users.get(name)!;
 
-        if (user?.password !== password) {
+        if (user.password !== password) {
             ws.send(JSON.stringify({ id: 0, error: 'Invalid password' }));
             return;
         }
-        index = users.get(name)?.index;
+        index = user.index;
     }
     else {
         index = users.size + 1;
