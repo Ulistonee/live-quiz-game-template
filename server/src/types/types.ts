@@ -29,7 +29,6 @@ export interface Game {
   questionStartTime?: number;
   questionTimer?: NodeJS.Timeout;
   playerAnswers: Map<string, { answerIndex: number; timestamp: number }>;
-  /** internal: prevents double `question_result` for the same question index */
   _lastResolvedQuestion?: number;
 }
 
