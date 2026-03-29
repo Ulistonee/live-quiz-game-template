@@ -72,6 +72,7 @@ export const handleJoinGame = (ws: AuthedWebSocket, msg: unknown) => {
     }
 
     if (game.hostWs && game.hostWs.readyState === game.hostWs.OPEN) {
+        game.hostWs.send(broadcastMsg);
         game.hostWs.send(updatePlayersMsg);
     }
 }

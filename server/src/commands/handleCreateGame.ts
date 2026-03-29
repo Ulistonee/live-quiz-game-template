@@ -1,7 +1,18 @@
+import { randomBytes, randomUUID } from "node:crypto";
 import { games } from "../store/store.js";
-import { v4 as uuid } from "uuid";
 import type { AuthedWebSocket } from "../types/types.js";
 import type { CreateGameData, Game, Question } from "../types/types.js";
+
+const ROOM_CODE_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+function generateRoomCode(): string {
+    const bytes = randomBytes(6);
+    let code = "";
+    for (let i = 0; i < 6; i++) {
+        code += ROOM_CODE_ALPHABET[bytes[i]! % ROOM_CODE_ALPHABET.length]!;
+    }
+    return code;
+}
 
 function isQuestion(x: unknown): x is Question {
     if (!x || typeof x !== "object") return false;
@@ -25,7 +36,11 @@ function isQuestion(x: unknown): x is Question {
 function isCreateGameData(x: unknown): x is CreateGameData {
     if (!x || typeof x !== "object") return false;
     const d = x as Record<string, unknown>;
-    return Array.isArray(d.questions) && d.questions.every(isQuestion);
+    return (
+        Array.isArray(d.questions) &&
+        d.questions.length > 0 &&
+        d.questions.every(isQuestion)
+    );
 }
 
 export const handleCreateGame = (ws: AuthedWebSocket, msg: unknown) => {
@@ -42,8 +57,8 @@ export const handleCreateGame = (ws: AuthedWebSocket, msg: unknown) => {
     const { questions } = msg;
 
     const game: Game = {
-        id: uuid(),
-        code: uuid().slice(0, 6),
+        id: randomUUID(),
+        code: generateRoomCode(),
         hostId: ws.user.index,
         hostWs: ws,
         questions: questions,

@@ -22,5 +22,4 @@ node_modules/
 
 # Build output
 dist
-assignment.md
-score.md
+.idea
