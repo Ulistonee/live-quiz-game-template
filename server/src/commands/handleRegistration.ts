@@ -1,0 +1,69 @@
+import { players } from '../store/store.js';
+import { users } from '../store/store.js';
+import type { AuthedWebSocket } from '../types/types.js';
+
+function sendRegError(ws: AuthedWebSocket, errorText: string) {
+    ws.send(
+        JSON.stringify({
+            type: 'reg',
+            data: {
+                error: true,
+                errorText,
+            },
+            id: 0,
+        }),
+    );
+}
+
+export const handleRegistration = (ws: AuthedWebSocket, msg: any) => {
+    const { name, password } = msg;
+    let index;
+
+    if (!name || !password) {
+        sendRegError(ws, 'Invalid data');
+        return;
+    }
+
+    if (users.has(name)) {
+        const user = users.get(name)!;
+
+        if (user.password !== password) {
+            sendRegError(ws, 'Invalid password');
+            return;
+        }
+        user.ws = ws;
+        index = user.index;
+    }
+    else {
+        index = users.size + 1;
+        users.set(name, {
+            name: name,
+            index: index,
+            password: password,
+            ws: ws,
+        });
+    }
+    
+
+    players.set(name, {
+        name: name,
+        index: index,
+        score: 0,
+        ws: ws,
+    });
+
+    ws.user = { name: name, index: index, password: password };
+    ws.user.ws = ws;
+
+    ws.send(JSON.stringify(
+    { 
+        type: "reg",
+        data: {
+            name: name,
+            index: index,
+            error: false,
+            errorText: ""
+        },
+        id: 0
+    }));
+}
